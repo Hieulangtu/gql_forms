@@ -113,7 +113,42 @@ app.include_router(graphql_app, prefix="/gql2")
 async def graphiql(request: Request):
     return await graphql_app.render_graphql_ide(request)
 
+
+# Implementation of SLI collection with prometheus python client.
+from prometheus_client import start_http_server, Counter, Histogram
+from random import uniform # devel only
+import time
+
+HISTOGRAM = Histogram('request_latency_seconds', 'Latency created by processing request')
+
+# Custom counter can be implemented in a function
+#   to count only certain part of the request processing.
+# But I'm using it to show the usage of labels.
+c = Counter('request_count_total', 'Count of labeled requests', ['result','endpoint'])
+
+# Labels are good to filter data while processing them,
+#   events can be ignored or categorized with labels.
+# Labels can also be used to tag 'bad' events and watch what degrades the service quality.
+c.labels('success','/gql')
+c.labels('fail','/gql')
+start_http_server(8080)
+
+@HISTOGRAM.time()
+def apollo_gql_slo_dummy(t):
+    time.sleep(t)
+    if t > 4.7:
+        c.labels('fail','/gql').inc() # increases 1 by default, .inc(NUMBER)
+    else:
+        c.labels('success','/gql').inc()
+    return 0
+
+
 from utils.sentinel import sentinel
+
+from prometheus_client import Histogram
+
+APOLLO_GQL_HISTOGRAM = Histogram('apollo_gql_processing_seconds', 'Time spent processing apollo_gql requests')
+@APOLLO_GQL_HISTOGRAM.time()
 
 @app.post("/gql")
 async def apollo_gql(request: Request, item: Item):

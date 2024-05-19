@@ -23,6 +23,12 @@ FROM prepare as tester
 RUN python -m pip install -r requirements-dev.txt
 RUN python -m pip install coverage pytest pytest-cov
 RUN python -m pytest --cov-report term-missing --cov=DBDefinitions --cov=GraphTypeDefinitions --cov=utils --log-cli-level=INFO
+# Skip for now
+#FROM prepare as tester
+#RUN python -m pip install -r requirements-dev.txt
+#RUN python -m pip install coverage pytest pytest-cov
+#RUN python -m pytest --cov-report term-missing --cov=DBDefinitions --cov=GraphTypeDefinitions --cov=utils --log-cli-level=INFO
+
 
 FROM prepare as runner
 # Creates a non-root user and adds permission to access the /app folder
